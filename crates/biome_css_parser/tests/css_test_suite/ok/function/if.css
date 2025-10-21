@@ -1,0 +1,7 @@
+body {
+  max-width: 700px;
+  margin: if(
+    media(width < 700px): 0;
+    else: 20px;
+  ) auto 0;
+}

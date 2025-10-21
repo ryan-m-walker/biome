@@ -1728,6 +1728,7 @@ CssRatio =
 AnyCssFunction =
 	CssFunction
 	| CssUrlFunction
+	| CssIfFunction
 
 // content: counter(section);
 // 					^^^^^^^^^^^^^^^^
@@ -1766,6 +1767,130 @@ AnyCssUrlValue =
 	| CssString
 
 CssParameterList = CssParameter (',' CssParameter)* ','?
+
+// https://drafts.csswg.org/css-values-5/#if-notation
+// <if()> = if( [ <if-branch> ; ]* <if-branch> ;? )
+// if(style(--scheme: dark): black; else: white;)
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CssIfFunction =
+	name: 'if'
+	'('
+	branches: CssIfBranchList
+	')'
+
+// style(--scheme: dark): black; else: white;
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CssIfBranchList = CssIfBranch (';' CssIfBranch)* ';'?
+
+// <if-branch> = <if-condition> : <declaration-value>?
+// style(--scheme: dark): black
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CssIfBranch =
+	condition: CssIfCondition
+	':'
+	value: CssGenericComponentValueList
+
+// <if-condition> = <boolean-expr[ <if-test> ]> | else
+CssIfCondition =
+	AnyCssIfBooleanExpr
+	| 'else'
+
+// <boolean-expr[ <if-test> ]>
+// Follows the pattern: not <boolean-expr-group> | <boolean-expr-group> [ [ and <boolean-expr-group> ]* | [ or <boolean-expr-group> ]* ]
+AnyCssIfBooleanExpr =
+	CssIfBooleanNot
+	| CssIfBooleanAnd
+	| CssIfBooleanOr
+	| CssIfBooleanExprGroup
+
+// not (style(--scheme: dark))
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CssIfBooleanNot =
+	'not'
+	expr: CssIfBooleanExprGroup
+
+// media(width > 500px) and supports(display: grid)
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CssIfBooleanAnd =
+	left: CssIfBooleanExprGroup
+	'and'
+	right: AnyCssIfBooleanAndCombinable
+
+AnyCssIfBooleanAndCombinable =
+	CssIfBooleanAnd
+	| CssIfBooleanExprGroup
+
+// media(width > 500px) or media(height > 500px)
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CssIfBooleanOr =
+	left: CssIfBooleanExprGroup
+	'or'
+	right: AnyCssIfBooleanOrCombinable
+
+AnyCssIfBooleanOrCombinable =
+	CssIfBooleanOr
+	| CssIfBooleanExprGroup
+
+// <boolean-expr-group> = <test> | ( <boolean-expr[ <test> ]> ) | <general-enclosed>
+CssIfBooleanExprGroup =
+	AnyCssIfTest
+	| CssIfBooleanParenthesized
+
+// (media(width > 500px) and supports(display: grid))
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CssIfBooleanParenthesized =
+	'('
+	expr: AnyCssIfBooleanExpr
+	')'
+
+// <if-test> = supports(...) | media(...) | style(...)
+AnyCssIfTest =
+	CssIfSupportsTest
+	| CssIfMediaTest
+	| CssIfStyleTest
+
+// supports(display: grid)
+// ^^^^^^^^^^^^^^^^^^^^^^^
+// supports(not (display: flex))
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+CssIfSupportsTest =
+	'supports'
+	'('
+	condition: AnyCssIfSupportsCondition
+	')'
+
+// <ident> : <declaration-value> | <supports-condition>
+AnyCssIfSupportsCondition =
+	CssIfSupportsDeclaration
+	| AnyCssSupportsCondition
+
+// display: grid
+// ^^^^^^^^^^^^^
+CssIfSupportsDeclaration =
+	name: CssIdentifier
+	':'
+	value: CssGenericComponentValueList
+
+// media(width > 500px)
+// ^^^^^^^^^^^^^^^^^^^^
+CssIfMediaTest =
+	'media'
+	'('
+	condition: AnyCssIfMediaCondition
+	')'
+
+// <media-feature> | <media-condition>
+AnyCssIfMediaCondition =
+	AnyCssMediaCondition
+	| AnyCssQueryFeature
+
+// style(--scheme: dark)
+// ^^^^^^^^^^^^^^^^^^^^^
+CssIfStyleTest =
+	'style'
+	'('
+	query: AnyCssContainerStyleQuery
+	')'
 
 // cubic-bezier(0.1, 0.7, 1.0, 0.1)
 //			    ^^^
