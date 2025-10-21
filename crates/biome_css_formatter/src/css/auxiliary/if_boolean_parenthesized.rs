@@ -9,6 +9,6 @@ impl FormatNodeRule<CssIfBooleanParenthesized> for FormatCssIfBooleanParenthesiz
         node: &CssIfBooleanParenthesized,
         f: &mut CssFormatter,
     ) -> FormatResult<()> {
-        format_verbatim_node(node.syntax()).fmt(f)
+        format_css_verbatim_node(node.syntax()).fmt(f)
     }
 }

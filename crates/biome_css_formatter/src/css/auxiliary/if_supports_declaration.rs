@@ -9,6 +9,6 @@ impl FormatNodeRule<CssIfSupportsDeclaration> for FormatCssIfSupportsDeclaration
         node: &CssIfSupportsDeclaration,
         f: &mut CssFormatter,
     ) -> FormatResult<()> {
-        format_verbatim_node(node.syntax()).fmt(f)
+        format_css_verbatim_node(node.syntax()).fmt(f)
     }
 }

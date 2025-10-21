@@ -1,4 +1,5 @@
 use super::parse_error::expected_expression;
+use super::r#if::{is_at_if_function, parse_if_function};
 use super::url::{is_at_url_function, parse_url_function};
 use crate::parser::CssParser;
 use crate::syntax::parse_error::expected_declaration_item;
@@ -19,7 +20,7 @@ use biome_parser::{Parser, TokenSet, token_set};
 /// It's used to quickly determine if the parser is positioned at a relevant function.
 #[inline]
 pub(crate) fn is_at_any_function(p: &mut CssParser) -> bool {
-    is_at_url_function(p) || is_at_function(p)
+    is_at_url_function(p) || is_at_if_function(p) || is_at_function(p)
 }
 
 /// Parses any recognized CSS function at the current position in the `CssParser`.
@@ -35,6 +36,8 @@ pub(crate) fn parse_any_function(p: &mut CssParser) -> ParsedSyntax {
 
     if is_at_url_function(p) {
         parse_url_function(p)
+    } else if is_at_if_function(p) {
+        parse_if_function(p)
     } else {
         parse_function(p)
     }
@@ -46,7 +49,7 @@ pub(crate) fn parse_any_function(p: &mut CssParser) -> ParsedSyntax {
 /// excluding URL functions (since URL functions are also considered simple functions but are handled separately).
 #[inline]
 pub(crate) fn is_at_function(p: &mut CssParser) -> bool {
-    is_nth_at_function(p, 0) && !is_at_url_function(p)
+    is_nth_at_function(p, 0) && !is_at_url_function(p) && !is_at_if_function(p)
 }
 
 #[inline]

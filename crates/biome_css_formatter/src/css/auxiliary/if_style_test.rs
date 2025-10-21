@@ -5,6 +5,6 @@ use biome_rowan::AstNode;
 pub(crate) struct FormatCssIfStyleTest;
 impl FormatNodeRule<CssIfStyleTest> for FormatCssIfStyleTest {
     fn fmt_fields(&self, node: &CssIfStyleTest, f: &mut CssFormatter) -> FormatResult<()> {
-        format_verbatim_node(node.syntax()).fmt(f)
+        format_css_verbatim_node(node.syntax()).fmt(f)
     }
 }
