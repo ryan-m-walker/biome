@@ -1671,13 +1671,13 @@ CssViewTransitionAtRule =
 // `name_to_module` function in `src/formatter.rs`.
 AnyCssValue =
 	CssIdentifier
+	| AnyCssFunction
 	| CssCustomIdentifier
 	| CssDashedIdentifier
 	| CssString
 	| CssNumber
 	| AnyCssDimension
 	| CssRatio
-	| AnyCssFunction
 	| CssColor
 	| CssBracketedValue
 	| CssUnicodeRange

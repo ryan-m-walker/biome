@@ -10,7 +10,6 @@ impl FormatRule<AnyCssIfTest> for FormatAnyCssIfTest {
         match node {
             AnyCssIfTest::CssIfMediaTest(node) => node.format().fmt(f),
             AnyCssIfTest::CssIfStyleTest(node) => node.format().fmt(f),
-            AnyCssIfTest::CssIfSupportsTest(node) => node.format().fmt(f),
         }
     }
 }

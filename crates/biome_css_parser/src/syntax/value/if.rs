@@ -1,20 +1,24 @@
 use crate::parser::CssParser;
-use crate::syntax::CssComponentValueList;
 use crate::syntax::is_nth_at_identifier;
 use crate::syntax::parse_error::expected_declaration_item;
 use crate::syntax::value::function::is_nth_at_function;
+use crate::syntax::{is_at_any_value, parse_any_value};
 use biome_css_syntax::CssSyntaxKind::*;
 use biome_css_syntax::{CssSyntaxKind, T};
 use biome_parser::parse_lists::{ParseNodeList, ParseSeparatedList};
 use biome_parser::parse_recovery::{ParseRecovery, RecoveryResult};
 use biome_parser::parsed_syntax::ParsedSyntax;
 use biome_parser::parsed_syntax::ParsedSyntax::{Absent, Present};
-use biome_parser::{Parser, token_set};
+use biome_parser::{Parser, TokenSet, token_set};
 
 /// Checks if the current position in the CSS parser is at the start of an if() function.
 #[inline]
 pub(crate) fn is_at_if_function(p: &mut CssParser) -> bool {
-    is_nth_at_function(p, 0) && p.cur_text() == "if"
+    let result = p.at(T![if]) && p.nth_at(1, T!['(']);
+    if p.at(T![if]) {
+        eprintln!("DEBUG is_at_if_function: at IF_KW, next is '('? {}, result: {}", p.nth_at(1, T!['(']), result);
+    }
+    result
 }
 
 /// Parses a CSS if() function
@@ -26,6 +30,7 @@ pub(crate) fn parse_if_function(p: &mut CssParser) -> ParsedSyntax {
         return Absent;
     }
 
+    eprintln!("DEBUG parse_if_function: STARTING to parse if() function");
     let m = p.start();
 
     // Parse 'if' keyword
@@ -37,7 +42,9 @@ pub(crate) fn parse_if_function(p: &mut CssParser) -> ParsedSyntax {
 
     p.expect(T![')']);
 
-    Present(m.complete(p, CSS_IF_FUNCTION))
+    let result = m.complete(p, CSS_IF_FUNCTION);
+    eprintln!("DEBUG parse_if_function: COMPLETED, node kind: CSS_IF_FUNCTION");
+    Present(result)
 }
 
 struct IfBranchListParseRecovery;
@@ -105,10 +112,72 @@ fn parse_if_branch(p: &mut CssParser) -> ParsedSyntax {
     // Parse colon
     p.expect(T![:]);
 
-    // Parse value (list of component values)
-    CssComponentValueList.parse_list(p);
+    // Parse value (list of generic component values)
+    IfBranchValueList.parse_list(p);
 
     Present(m.complete(p, CSS_IF_BRANCH))
+}
+
+const END_OF_IF_BRANCH_VALUE: TokenSet<CssSyntaxKind> = token_set!(T![;], T![')']);
+
+struct IfBranchValueList;
+
+impl ParseNodeList for IfBranchValueList {
+    type Kind = CssSyntaxKind;
+    type Parser<'source> = CssParser<'source>;
+    const LIST_KIND: Self::Kind = CSS_GENERIC_COMPONENT_VALUE_LIST;
+
+    fn parse_element(&mut self, p: &mut Self::Parser<'_>) -> ParsedSyntax {
+        if is_at_generic_component_value(p) {
+            parse_generic_component_value(p)
+        } else {
+            Absent
+        }
+    }
+
+    fn is_at_list_end(&self, p: &mut Self::Parser<'_>) -> bool {
+        p.at_ts(END_OF_IF_BRANCH_VALUE)
+    }
+
+    fn recover(
+        &mut self,
+        p: &mut Self::Parser<'_>,
+        parsed_element: ParsedSyntax,
+    ) -> RecoveryResult {
+        parsed_element.or_recover(p, &IfBranchListParseRecovery, expected_declaration_item)
+    }
+}
+
+const GENERIC_DELIMITER_SET: TokenSet<CssSyntaxKind> = token_set![T![,], T![/]];
+
+#[inline]
+fn is_at_generic_component_value(p: &mut CssParser) -> bool {
+    is_at_any_value(p) || is_at_generic_delimiter(p)
+}
+
+#[inline]
+fn parse_generic_component_value(p: &mut CssParser) -> ParsedSyntax {
+    if is_at_generic_delimiter(p) {
+        parse_generic_delimiter(p)
+    } else {
+        parse_any_value(p)
+    }
+}
+
+#[inline]
+fn is_at_generic_delimiter(p: &mut CssParser) -> bool {
+    p.at_ts(GENERIC_DELIMITER_SET)
+}
+
+#[inline]
+fn parse_generic_delimiter(p: &mut CssParser) -> ParsedSyntax {
+    if !is_at_generic_delimiter(p) {
+        return Absent;
+    }
+
+    let m = p.start();
+    p.bump_ts(GENERIC_DELIMITER_SET);
+    Present(m.complete(p, CSS_GENERIC_DELIMITER))
 }
 
 /// Checks if the parser is at the start of an if-condition
@@ -280,7 +349,7 @@ fn parse_if_supports_declaration(p: &mut CssParser) -> ParsedSyntax {
     let m = p.start();
     p.bump_any(); // identifier
     p.bump(T![:]);
-    CssComponentValueList.parse_list(p);
+    IfBranchValueList.parse_list(p);
     Present(m.complete(p, CSS_IF_SUPPORTS_DECLARATION))
 }
 
