@@ -6,6 +6,40 @@ use crate::{
     AsFormat, CssFormatContext, CssFormatter, FormatBogusNodeRule, FormatNodeRule, IntoFormat,
 };
 use biome_formatter::{FormatOwnedWithRule, FormatRefWithRule, FormatResult, FormatRule};
+impl FormatRule<biome_css_syntax::AnyCssIfTest>
+    for crate::css::auxiliary::if_test::FormatAnyCssIfTest
+{
+    type Context = CssFormatContext;
+    #[inline(always)]
+    fn fmt(&self, node: &biome_css_syntax::AnyCssIfTest, f: &mut CssFormatter) -> FormatResult<()> {
+        FormatNodeRule::<biome_css_syntax::AnyCssIfTest>::fmt(self, node, f)
+    }
+}
+impl AsFormat<CssFormatContext> for biome_css_syntax::AnyCssIfTest {
+    type Format<'a> = FormatRefWithRule<
+        'a,
+        biome_css_syntax::AnyCssIfTest,
+        crate::css::auxiliary::if_test::FormatAnyCssIfTest,
+    >;
+    fn format(&self) -> Self::Format<'_> {
+        FormatRefWithRule::new(
+            self,
+            crate::css::auxiliary::if_test::FormatAnyCssIfTest::default(),
+        )
+    }
+}
+impl IntoFormat<CssFormatContext> for biome_css_syntax::AnyCssIfTest {
+    type Format = FormatOwnedWithRule<
+        biome_css_syntax::AnyCssIfTest,
+        crate::css::auxiliary::if_test::FormatAnyCssIfTest,
+    >;
+    fn into_format(self) -> Self::Format {
+        FormatOwnedWithRule::new(
+            self,
+            crate::css::auxiliary::if_test::FormatAnyCssIfTest::default(),
+        )
+    }
+}
 impl FormatRule<biome_css_syntax::CssAtRule> for crate::css::statements::at_rule::FormatCssAtRule {
     type Context = CssFormatContext;
     #[inline(always)]
@@ -8460,31 +8494,6 @@ impl IntoFormat<CssFormatContext> for biome_css_syntax::AnyCssIfSupportsConditio
         FormatOwnedWithRule::new(
             self,
             crate::css::any::if_supports_condition::FormatAnyCssIfSupportsCondition::default(),
-        )
-    }
-}
-impl AsFormat<CssFormatContext> for biome_css_syntax::AnyCssIfTest {
-    type Format<'a> = FormatRefWithRule<
-        'a,
-        biome_css_syntax::AnyCssIfTest,
-        crate::css::any::if_test::FormatAnyCssIfTest,
-    >;
-    fn format(&self) -> Self::Format<'_> {
-        FormatRefWithRule::new(
-            self,
-            crate::css::any::if_test::FormatAnyCssIfTest::default(),
-        )
-    }
-}
-impl IntoFormat<CssFormatContext> for biome_css_syntax::AnyCssIfTest {
-    type Format = FormatOwnedWithRule<
-        biome_css_syntax::AnyCssIfTest,
-        crate::css::any::if_test::FormatAnyCssIfTest,
-    >;
-    fn into_format(self) -> Self::Format {
-        FormatOwnedWithRule::new(
-            self,
-            crate::css::any::if_test::FormatAnyCssIfTest::default(),
         )
     }
 }

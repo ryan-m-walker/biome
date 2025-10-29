@@ -35,7 +35,6 @@ pub(crate) mod if_boolean_expr_group;
 pub(crate) mod if_boolean_or_combinable;
 pub(crate) mod if_media_condition;
 pub(crate) mod if_supports_condition;
-pub(crate) mod if_test;
 pub(crate) mod import_layer;
 pub(crate) mod import_supports_condition;
 pub(crate) mod import_url;

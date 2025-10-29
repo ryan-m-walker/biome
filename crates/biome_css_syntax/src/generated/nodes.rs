@@ -20,6 +20,41 @@ use std::fmt::{Debug, Formatter};
 #[doc = r" the slots are not statically known."]
 pub(crate) const SLOT_MAP_EMPTY_VALUE: u8 = u8::MAX;
 #[derive(Clone, PartialEq, Eq, Hash)]
+pub struct AnyCssIfTest {
+    pub(crate) syntax: SyntaxNode,
+}
+impl AnyCssIfTest {
+    #[doc = r" Create an AstNode from a SyntaxNode without checking its kind"]
+    #[doc = r""]
+    #[doc = r" # Safety"]
+    #[doc = r" This function must be guarded with a call to [AstNode::can_cast]"]
+    #[doc = r" or a match on [SyntaxNode::kind]"]
+    #[inline]
+    pub const unsafe fn new_unchecked(syntax: SyntaxNode) -> Self {
+        Self { syntax }
+    }
+    pub fn as_fields(&self) -> AnyCssIfTestFields {
+        AnyCssIfTestFields {
+            css_if_style_test: self.css_if_style_test(),
+        }
+    }
+    pub fn css_if_style_test(&self) -> SyntaxResult<CssIfStyleTest> {
+        support::required_node(&self.syntax, 0usize)
+    }
+}
+impl Serialize for AnyCssIfTest {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.as_fields().serialize(serializer)
+    }
+}
+#[derive(Serialize)]
+pub struct AnyCssIfTestFields {
+    pub css_if_style_test: SyntaxResult<CssIfStyleTest>,
+}
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct CssAtRule {
     pub(crate) syntax: SyntaxNode,
 }
@@ -8320,32 +8355,6 @@ impl AnyCssIfSupportsCondition {
     }
 }
 #[derive(Clone, PartialEq, Eq, Hash, Serialize)]
-pub enum AnyCssIfTest {
-    CssIfMediaTest(CssIfMediaTest),
-    CssIfStyleTest(CssIfStyleTest),
-    CssIfSupportsTest(CssIfSupportsTest),
-}
-impl AnyCssIfTest {
-    pub fn as_css_if_media_test(&self) -> Option<&CssIfMediaTest> {
-        match &self {
-            Self::CssIfMediaTest(item) => Some(item),
-            _ => None,
-        }
-    }
-    pub fn as_css_if_style_test(&self) -> Option<&CssIfStyleTest> {
-        match &self {
-            Self::CssIfStyleTest(item) => Some(item),
-            _ => None,
-        }
-    }
-    pub fn as_css_if_supports_test(&self) -> Option<&CssIfSupportsTest> {
-        match &self {
-            Self::CssIfSupportsTest(item) => Some(item),
-            _ => None,
-        }
-    }
-}
-#[derive(Clone, PartialEq, Eq, Hash, Serialize)]
 pub enum AnyCssImportLayer {
     CssImportAnonymousLayer(CssImportAnonymousLayer),
     CssImportNamedLayer(CssImportNamedLayer),
@@ -9749,6 +9758,56 @@ impl CssIfBooleanExprGroup {
             Self::CssIfBooleanParenthesized(item) => Some(item),
             _ => None,
         }
+    }
+}
+impl AstNode for AnyCssIfTest {
+    type Language = Language;
+    const KIND_SET: SyntaxKindSet<Language> =
+        SyntaxKindSet::from_raw(RawSyntaxKind(ANY_CSS_IF_TEST as u16));
+    fn can_cast(kind: SyntaxKind) -> bool {
+        kind == ANY_CSS_IF_TEST
+    }
+    fn cast(syntax: SyntaxNode) -> Option<Self> {
+        if Self::can_cast(syntax.kind()) {
+            Some(Self { syntax })
+        } else {
+            None
+        }
+    }
+    fn syntax(&self) -> &SyntaxNode {
+        &self.syntax
+    }
+    fn into_syntax(self) -> SyntaxNode {
+        self.syntax
+    }
+}
+impl std::fmt::Debug for AnyCssIfTest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        thread_local! { static DEPTH : std :: cell :: Cell < u8 > = const { std :: cell :: Cell :: new (0) } };
+        let current_depth = DEPTH.get();
+        let result = if current_depth < 16 {
+            DEPTH.set(current_depth + 1);
+            f.debug_struct("AnyCssIfTest")
+                .field(
+                    "css_if_style_test",
+                    &support::DebugSyntaxResult(self.css_if_style_test()),
+                )
+                .finish()
+        } else {
+            f.debug_struct("AnyCssIfTest").finish()
+        };
+        DEPTH.set(current_depth);
+        result
+    }
+}
+impl From<AnyCssIfTest> for SyntaxNode {
+    fn from(n: AnyCssIfTest) -> Self {
+        n.syntax
+    }
+}
+impl From<AnyCssIfTest> for SyntaxElement {
+    fn from(n: AnyCssIfTest) -> Self {
+        n.syntax.into()
     }
 }
 impl AstNode for CssAtRule {
@@ -21304,80 +21363,6 @@ impl From<AnyCssIfSupportsCondition> for SyntaxElement {
         node.into()
     }
 }
-impl From<CssIfMediaTest> for AnyCssIfTest {
-    fn from(node: CssIfMediaTest) -> Self {
-        Self::CssIfMediaTest(node)
-    }
-}
-impl From<CssIfStyleTest> for AnyCssIfTest {
-    fn from(node: CssIfStyleTest) -> Self {
-        Self::CssIfStyleTest(node)
-    }
-}
-impl From<CssIfSupportsTest> for AnyCssIfTest {
-    fn from(node: CssIfSupportsTest) -> Self {
-        Self::CssIfSupportsTest(node)
-    }
-}
-impl AstNode for AnyCssIfTest {
-    type Language = Language;
-    const KIND_SET: SyntaxKindSet<Language> = CssIfMediaTest::KIND_SET
-        .union(CssIfStyleTest::KIND_SET)
-        .union(CssIfSupportsTest::KIND_SET);
-    fn can_cast(kind: SyntaxKind) -> bool {
-        matches!(
-            kind,
-            CSS_IF_MEDIA_TEST | CSS_IF_STYLE_TEST | CSS_IF_SUPPORTS_TEST
-        )
-    }
-    fn cast(syntax: SyntaxNode) -> Option<Self> {
-        let res = match syntax.kind() {
-            CSS_IF_MEDIA_TEST => Self::CssIfMediaTest(CssIfMediaTest { syntax }),
-            CSS_IF_STYLE_TEST => Self::CssIfStyleTest(CssIfStyleTest { syntax }),
-            CSS_IF_SUPPORTS_TEST => Self::CssIfSupportsTest(CssIfSupportsTest { syntax }),
-            _ => return None,
-        };
-        Some(res)
-    }
-    fn syntax(&self) -> &SyntaxNode {
-        match self {
-            Self::CssIfMediaTest(it) => &it.syntax,
-            Self::CssIfStyleTest(it) => &it.syntax,
-            Self::CssIfSupportsTest(it) => &it.syntax,
-        }
-    }
-    fn into_syntax(self) -> SyntaxNode {
-        match self {
-            Self::CssIfMediaTest(it) => it.syntax,
-            Self::CssIfStyleTest(it) => it.syntax,
-            Self::CssIfSupportsTest(it) => it.syntax,
-        }
-    }
-}
-impl std::fmt::Debug for AnyCssIfTest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::CssIfMediaTest(it) => std::fmt::Debug::fmt(it, f),
-            Self::CssIfStyleTest(it) => std::fmt::Debug::fmt(it, f),
-            Self::CssIfSupportsTest(it) => std::fmt::Debug::fmt(it, f),
-        }
-    }
-}
-impl From<AnyCssIfTest> for SyntaxNode {
-    fn from(n: AnyCssIfTest) -> Self {
-        match n {
-            AnyCssIfTest::CssIfMediaTest(it) => it.into(),
-            AnyCssIfTest::CssIfStyleTest(it) => it.into(),
-            AnyCssIfTest::CssIfSupportsTest(it) => it.into(),
-        }
-    }
-}
-impl From<AnyCssIfTest> for SyntaxElement {
-    fn from(n: AnyCssIfTest) -> Self {
-        let node: SyntaxNode = n.into();
-        node.into()
-    }
-}
 impl From<CssImportAnonymousLayer> for AnyCssImportLayer {
     fn from(node: CssImportAnonymousLayer) -> Self {
         Self::CssImportAnonymousLayer(node)
@@ -25306,6 +25291,11 @@ impl From<AnyCssValueAtRuleProperty> for SyntaxElement {
         node.into()
     }
 }
+impl From<AnyCssIfTest> for CssIfBooleanExprGroup {
+    fn from(node: AnyCssIfTest) -> Self {
+        Self::AnyCssIfTest(node)
+    }
+}
 impl From<CssIfBooleanParenthesized> for CssIfBooleanExprGroup {
     fn from(node: CssIfBooleanParenthesized) -> Self {
         Self::CssIfBooleanParenthesized(node)
@@ -25316,36 +25306,28 @@ impl AstNode for CssIfBooleanExprGroup {
     const KIND_SET: SyntaxKindSet<Language> =
         AnyCssIfTest::KIND_SET.union(CssIfBooleanParenthesized::KIND_SET);
     fn can_cast(kind: SyntaxKind) -> bool {
-        match kind {
-            CSS_IF_BOOLEAN_PARENTHESIZED => true,
-            k if AnyCssIfTest::can_cast(k) => true,
-            _ => false,
-        }
+        matches!(kind, ANY_CSS_IF_TEST | CSS_IF_BOOLEAN_PARENTHESIZED)
     }
     fn cast(syntax: SyntaxNode) -> Option<Self> {
         let res = match syntax.kind() {
+            ANY_CSS_IF_TEST => Self::AnyCssIfTest(AnyCssIfTest { syntax }),
             CSS_IF_BOOLEAN_PARENTHESIZED => {
                 Self::CssIfBooleanParenthesized(CssIfBooleanParenthesized { syntax })
             }
-            _ => {
-                if let Some(any_css_if_test) = AnyCssIfTest::cast(syntax) {
-                    return Some(Self::AnyCssIfTest(any_css_if_test));
-                }
-                return None;
-            }
+            _ => return None,
         };
         Some(res)
     }
     fn syntax(&self) -> &SyntaxNode {
         match self {
+            Self::AnyCssIfTest(it) => &it.syntax,
             Self::CssIfBooleanParenthesized(it) => &it.syntax,
-            Self::AnyCssIfTest(it) => it.syntax(),
         }
     }
     fn into_syntax(self) -> SyntaxNode {
         match self {
+            Self::AnyCssIfTest(it) => it.syntax,
             Self::CssIfBooleanParenthesized(it) => it.syntax,
-            Self::AnyCssIfTest(it) => it.into_syntax(),
         }
     }
 }
@@ -25537,11 +25519,6 @@ impl std::fmt::Display for AnyCssIfMediaCondition {
     }
 }
 impl std::fmt::Display for AnyCssIfSupportsCondition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(self.syntax(), f)
-    }
-}
-impl std::fmt::Display for AnyCssIfTest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(self.syntax(), f)
     }
@@ -25797,6 +25774,11 @@ impl std::fmt::Display for AnyCssValueAtRuleProperty {
     }
 }
 impl std::fmt::Display for CssIfBooleanExprGroup {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(self.syntax(), f)
+    }
+}
+impl std::fmt::Display for AnyCssIfTest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(self.syntax(), f)
     }

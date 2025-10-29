@@ -1671,13 +1671,13 @@ CssViewTransitionAtRule =
 // `name_to_module` function in `src/formatter.rs`.
 AnyCssValue =
 	CssIdentifier
-	| AnyCssFunction
 	| CssCustomIdentifier
 	| CssDashedIdentifier
 	| CssString
 	| CssNumber
 	| AnyCssDimension
 	| CssRatio
+	| AnyCssFunction
 	| CssColor
 	| CssBracketedValue
 	| CssUnicodeRange
@@ -1775,7 +1775,7 @@ CssParameterList = CssParameter (',' CssParameter)* ','?
 CssIfFunction =
 	name: 'if'
 	'('
-	branches: CssIfBranchList
+	 branches: CssIfBranchList
 	')'
 
 // style(--scheme: dark): black; else: white;
@@ -1845,9 +1845,10 @@ CssIfBooleanParenthesized =
 
 // <if-test> = supports(...) | media(...) | style(...)
 AnyCssIfTest =
-	CssIfSupportsTest
-	| CssIfMediaTest
-	| CssIfStyleTest
+//	CssIfSupportsTest
+//	| CssIfMediaTest
+//	|
+	CssIfStyleTest
 
 // supports(display: grid)
 // ^^^^^^^^^^^^^^^^^^^^^^^

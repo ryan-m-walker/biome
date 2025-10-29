@@ -3,6 +3,14 @@
 use crate::{CssSyntaxToken as SyntaxToken, generated::nodes::*};
 use biome_rowan::AstNode;
 use std::iter::once;
+impl AnyCssIfTest {
+    pub fn with_css_if_style_test(self, element: CssIfStyleTest) -> Self {
+        Self::unwrap_cast(
+            self.syntax
+                .splice_slots(0usize..=0usize, once(Some(element.into_syntax().into()))),
+        )
+    }
+}
 impl CssAtRule {
     pub fn with_at_token(self, element: SyntaxToken) -> Self {
         Self::unwrap_cast(

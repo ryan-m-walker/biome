@@ -41,6 +41,7 @@ pub(crate) mod if_media_test;
 pub(crate) mod if_style_test;
 pub(crate) mod if_supports_declaration;
 pub(crate) mod if_supports_test;
+pub(crate) mod if_test;
 pub(crate) mod import_anonymous_layer;
 pub(crate) mod import_named_layer;
 pub(crate) mod import_supports;

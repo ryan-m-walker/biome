@@ -6,6 +6,12 @@ use biome_css_syntax::{
     *,
 };
 use biome_rowan::AstNode;
+pub fn any_css_if_test(css_if_style_test: CssIfStyleTest) -> AnyCssIfTest {
+    AnyCssIfTest::unwrap_cast(SyntaxNode::new_detached(
+        CssSyntaxKind::ANY_CSS_IF_TEST,
+        [Some(SyntaxElement::Node(css_if_style_test.into_syntax()))],
+    ))
+}
 pub fn css_at_rule(at_token: SyntaxToken, rule: AnyCssAtRule) -> CssAtRule {
     CssAtRule::unwrap_cast(SyntaxNode::new_detached(
         CssSyntaxKind::CSS_AT_RULE,
