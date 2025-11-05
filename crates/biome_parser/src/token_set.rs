@@ -43,7 +43,8 @@ const fn mask(kind: u16) -> [u128; 2] {
     let num = kind as usize;
     match num {
         0..=127 => [1u128 << num, 0],
-        _ => [0, 1u128 << (num - 127)],
+        128..=255 => [0, 1u128 << (num - 128)],
+        _ => panic!("Invalid token kind. TokenSet supports kinds 0-255"),
     }
 }
 
@@ -55,4 +56,40 @@ macro_rules! token_set {
             TokenSet::EMPTY$(.union(unsafe { TokenSet::from_raw($t as u16) }))*
         }};
     ($($t:expr),* ,) => { token_set!($($t),*) };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mask() {
+        let [left, right] = mask(0);
+        assert_eq!(left.count_ones(), 1);
+        assert_eq!(left.trailing_zeros(), 0); // Bit at position 0
+        assert_eq!(right, 0);
+
+        // Test the maximum bit position in the left half
+        let [left, right] = mask(127);
+        assert_eq!(left.count_ones(), 1);
+        assert_eq!(left.trailing_zeros(), u128::BITS - 1); // Bit 127 = max bit position
+        assert_eq!(right, 0);
+
+        let [left, right] = mask(128);
+        assert_eq!(left, 0);
+        assert_eq!(right.count_ones(), 1);
+        assert_eq!(right.trailing_zeros(), 0); // Bit at position 0
+
+        // Test the maximum bit position in the right half
+        let [left, right] = mask(255);
+        assert_eq!(left, 0);
+        assert_eq!(right.count_ones(), 1);
+        assert_eq!(right.trailing_zeros(), u128::BITS - 1); // Bit 127 = max bit position
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid token kind. TokenSet supports kinds 0-255")]
+    fn test_mask_out_of_range() {
+        mask(256);
+    }
 }
